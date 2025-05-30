@@ -12,9 +12,10 @@ class_names = ['accordion', 'banjo', 'drum', 'flute', 'guitar', 'harmonica', 'sa
 model_path = 'models/trained_resnet.pt'
 model = models.mobilenet_v2(weights=MobileNet_V2_Weights.DEFAULT)
 model.fc = model.classifier = nn.Sequential(
-        nn.Dropout(p=0.2),
-        nn.Linear(in_features=1280, out_features=len(class_names)),
-        nn.LogSoftmax(dim=1))
+    nn.Dropout(p=0.2),
+    nn.Linear(in_features=1280, out_features=len(class_names)),
+    nn.LogSoftmax(dim=1)
+)
 model.eval()
 
 # Define transform
@@ -23,28 +24,35 @@ transform = transforms.Compose([
     transforms.CenterCrop(224),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                         std =[0.229, 0.224, 0.225])
+                         std=[0.229, 0.224, 0.225])
 ])
 
 # Streamlit UI
-st.title('Musical instrument classifier')
+st.title('Musical Instrument Classifier')
 
-uploaded_image = st.file_uploader('Upload an image of a musical instrument', type=('jpg', 'jpeg', 'png'))
+# Choose input method
+input_method = st.radio("Choose image input method:", ("Upload from Gallery", "Take a Photo"))
 
+if input_method == "Upload from Gallery":
+    uploaded_image = st.file_uploader("Upload an image", type=("jpg", "jpeg", "png"))
+elif input_method == "Take a Photo":
+    uploaded_image = st.camera_input("Take a photo")
+
+# Continue if an image is provided
 if uploaded_image is not None:
     image = Image.open(uploaded_image).convert('RGB')
     col_1, col_2 = st.columns(2)
 
     with col_1:
         resized_img = image.resize((256, 256))
-        st.image(resized_img)
+        st.image(resized_img, caption="Input Image")
 
     with col_2:
-        if st.button('Predict'):
+        if st.button("Predict"):
             with torch.no_grad():
                 img = transform(image).unsqueeze(0)
                 out = model(img)
                 _, pred = torch.max(out, 1)
                 prediction = class_names[pred.item()]
-                st.success(f'Prediction: {prediction}')
+                st.success(f"Prediction: {prediction}")
                 st.snow()
