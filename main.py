@@ -4,24 +4,28 @@ from PIL import Image
 from torchvision import transforms, models
 from torchvision.models import MobileNet_V2_Weights
 import torch.nn as nn
+    
 
 # Define class names
 class_names = ['accordion', 'banjo', 'drum', 'flute', 'guitar', 'harmonica', 'saxophone', 'sitar', 'tabla', 'violin']
+num_classes = len(class_names)
 
 # Load model
-model_path = 'models/trained_resnet.pt'
+model_path = 'models/trained_mobilenet.pt'
 model = models.mobilenet_v2(weights=MobileNet_V2_Weights.DEFAULT)
-model.fc = model.classifier = nn.Sequential(
+for param in model.parameters():
+        param.requires_grad = False
+model.classifier = nn.Sequential(
     nn.Dropout(p=0.2),
-    nn.Linear(in_features=1280, out_features=len(class_names)),
-    nn.LogSoftmax(dim=1)
-)
+    nn.Linear(in_features=1280, out_features=num_classes),
+    nn.LogSoftmax(dim=1))
+model.load_state_dict(torch.load(model_path))
 model.eval()
 
 # Define transform
 transform = transforms.Compose([
     transforms.Resize((256, 256)),
-    transforms.CenterCrop(224),
+    transforms.CenterCrop((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406],
                          std=[0.229, 0.224, 0.225])
