@@ -47,3 +47,4 @@ if uploaded_image is not None:
                 _, pred = torch.max(out, 1)
                 prediction = class_names[pred.item()]
                 st.success(f'Prediction: {prediction}')
+                st.snow()
